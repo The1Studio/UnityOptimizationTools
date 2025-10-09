@@ -36,5 +36,8 @@
     "build",
     "theone",
     "unity"
-  ]
+  ],
+  "publishConfig": {
+    "registry": "https://upm.the1studio.org"
+  }
 }

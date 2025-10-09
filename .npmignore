@@ -1,0 +1,12 @@
+*.meta
+.DS_Store
+Thumbs.db
+.idea
+.vscode
+*.swp
+*.tmp
+Example/
+Examples/
+Tests/
+Documentation~/
+*.unitypackage
