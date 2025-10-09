@@ -2,7 +2,7 @@
   "name": "com.theone.tool.optimization",
   "displayName": "TheOne Optimization Tools",
   "description": "Comprehensive optimization toolkit for Unity projects. Includes texture compression (TinyPNG), atlas generation, mesh optimization, shader analysis, Addressables management, and build size reduction tools.",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "unity": "2021.3",
   "license": "MIT",
   "repository": {
@@ -21,9 +21,11 @@
   "documentation": "https://github.com/The1Studio/UnityOptimizationTools#readme",
   "changelog": "https://github.com/The1Studio/UnityOptimizationTools/blob/main/CHANGELOG.md",
   "dependencies": {
-    "com.theone.template.editor": "1.0.0",
+    "com.theone.extensions": "1.0.0",
     "com.unity.addressables": "1.19.0",
-    "com.cysharp.unitask": "2.3.0"
+    "com.cysharp.unitask": "2.3.0",
+    "com.theone.tool.core": "1.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.0.0"
   },
   "keywords": [
     "editor",
