@@ -452,6 +452,9 @@ jobs:
               if [ "$published_version" = "$new_version" ]; then
                 echo "✅ Verified: ${package_name}@${new_version} is available on registry"
                 published=$((published + 1))
+
+                # Track package details for Discord notification
+                echo "${package_name}|${latest_version}|${new_version}" >> published_packages.txt
               else
                 echo "❌ Verification failed: Package not found on registry"
                 echo "   Expected: $new_version"
@@ -608,8 +611,19 @@ jobs:
             exit 0
           fi
 
-          # Build package list from audit log
-          package_list=$(jq -r '.published' audit-log.json 2>/dev/null || echo "${{ env.published }}")
+          # Build package details from tracking file
+          if [ -f published_packages.txt ]; then
+            package_details=$(cat published_packages.txt | while IFS='|' read -r name old_ver new_ver; do
+              if [ "$old_ver" = "0.0.0" ]; then
+                echo "• **$name**: \`$new_ver\` (new package)"
+              else
+                echo "• **$name**: \`$old_ver\` → \`$new_ver\`"
+              fi
+            done | tr '\n' '\n')
+          else
+            package_details="No package details available"
+          fi
+
           commit_msg=$(git log -1 --pretty=%s | head -c 200)
           commit_author=$(git log -1 --pretty='%an')
           workflow_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -626,6 +640,7 @@ jobs:
             --arg author "$commit_author" \
             --arg workflow_url "$workflow_url" \
             --arg registry "$registry_url" \
+            --arg package_details "$package_details" \
             --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
             '{
               "embeds": [{
@@ -634,14 +649,14 @@ jobs:
                 "color": 3066993,
                 "fields": [
                   {
-                    "name": "📦 Packages Published",
-                    "value": ($published | tostring),
-                    "inline": true
+                    "name": "📦 Package Details",
+                    "value": $package_details,
+                    "inline": false
                   },
                   {
-                    "name": "⏭️ Packages Skipped",
-                    "value": ($skipped | tostring),
-                    "inline": true
+                    "name": "📊 Summary",
+                    "value": ("Published: **" + $published + "** | Skipped: **" + $skipped + "**"),
+                    "inline": false
                   },
                   {
                     "name": "📁 Repository",
