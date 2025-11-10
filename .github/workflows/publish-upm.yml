@@ -243,7 +243,7 @@ jobs:
             # Check if file still exists (not deleted)
             if [ ! -f "$package_json" ]; then
               echo "⚠️  File was deleted, skipping"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -259,20 +259,20 @@ jobs:
             # FIX: Use explicit error handling for jq
             if ! package_name=$(jq -r '.name // empty' "$package_json" 2>/dev/null); then
               echo "❌ Failed to parse package.json, skipping"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
             if ! new_version=$(jq -r '.version // empty' "$package_json" 2>/dev/null); then
               echo "❌ Failed to parse package.json version, skipping"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
             # Validate package info
             if [ -z "$package_name" ] || [ -z "$new_version" ]; then
               echo "⚠️  Missing name or version in package.json, skipping"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -280,20 +280,20 @@ jobs:
             if [[ ! "$new_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.]+)?(\+[a-zA-Z0-9.]+)?$ ]]; then
               echo "❌ Invalid version format: $new_version"
               echo "   Version must follow semantic versioning (e.g., 1.0.0, 1.0.0-beta.1)"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
             # FIX: Check for dangerous characters in package name or version
             if [[ "$package_name" =~ [^a-zA-Z0-9._-] ]]; then
               echo "❌ Package name contains invalid characters: $package_name"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
             if [[ "$new_version" =~ [^a-zA-Z0-9.+-] ]]; then
               echo "❌ Version contains invalid characters: $new_version"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -306,7 +306,7 @@ jobs:
             echo "🔍 Checking if version exists on registry..."
             if npm_view_with_retry "${package_name}@${new_version}" >/dev/null 2>&1; then
               echo "⏭️  Version ${new_version} already exists for ${package_name}, skipping"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -331,7 +331,7 @@ jobs:
                   echo "   This appears to be a version rollback or mistake."
                   echo "   Skipping for safety - if intentional, publish manually with:"
                   echo "   npm publish --registry $UPM_REGISTRY"
-                  ((skipped++))
+                  skipped=$((skipped + 1))
                   continue
                 fi
               else
@@ -344,7 +344,7 @@ jobs:
                   echo "   This appears to be a version rollback or mistake."
                   echo "   Skipping for safety - if intentional, publish manually with:"
                   echo "   npm publish --registry $UPM_REGISTRY"
-                  ((skipped++))
+                  skipped=$((skipped + 1))
                   continue
                 else
                   echo "✅ Version check passed: $new_version > $latest_version (basic sort)"
@@ -364,7 +364,7 @@ jobs:
               sleep 5
               if ! npm ping --registry "$UPM_REGISTRY" &>/dev/null; then
                 echo "❌ Registry still not responding after retry"
-                ((failed++))
+                failed=$((failed + 1))
                 failed_packages="${failed_packages}${package_name}@${new_version} "
                 continue
               fi
@@ -373,7 +373,7 @@ jobs:
             # FIX: Validate directory exists before cd
             if [ ! -d "$package_dir" ]; then
               echo "❌ Directory does not exist: $package_dir"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -410,7 +410,7 @@ jobs:
             # FIX: Safe directory change with error handling
             if ! cd "$package_dir"; then
               echo "❌ Failed to change directory to $package_dir"
-              ((skipped++))
+              skipped=$((skipped + 1))
               continue
             fi
 
@@ -451,13 +451,13 @@ jobs:
 
               if [ "$published_version" = "$new_version" ]; then
                 echo "✅ Verified: ${package_name}@${new_version} is available on registry"
-                ((published++))
+                published=$((published + 1))
               else
                 echo "❌ Verification failed: Package not found on registry"
                 echo "   Expected: $new_version"
                 echo "   Got: ${published_version:-'not found'}"
                 echo "⚠️  Package may have been published but not yet indexed"
-                ((failed++))
+                failed=$((failed + 1))
                 failed_packages="${failed_packages}${package_name}@${new_version} "
               fi
             else
@@ -509,7 +509,7 @@ jobs:
               echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
               echo ""
 
-              ((failed++))
+              failed=$((failed + 1))
               failed_packages="${failed_packages}${package_name}@${new_version} "
             fi
 
