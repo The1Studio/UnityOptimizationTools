@@ -635,12 +635,12 @@ jobs:
               "fields": [
                 {
                   "name": "📦 Packages Published",
-                  "value": $published,
+                  "value": $published | tostring,
                   "inline": true
                 },
                 {
                   "name": "⏭️ Packages Skipped",
-                  "value": $skipped,
+                  "value": $skipped | tostring,
                   "inline": true
                 },
                 {
@@ -722,17 +722,17 @@ jobs:
               "fields": [
                 {
                   "name": "❌ Packages Failed",
-                  "value": $failed,
+                  "value": $failed | tostring,
                   "inline": true
                 },
                 {
                   "name": "✅ Packages Published",
-                  "value": $published,
+                  "value": $published | tostring,
                   "inline": true
                 },
                 {
                   "name": "⏭️ Packages Skipped",
-                  "value": $skipped,
+                  "value": $skipped | tostring,
                   "inline": true
                 },
                 {
