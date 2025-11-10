@@ -616,66 +616,65 @@ jobs:
           registry_url="${{ vars.UPM_REGISTRY || 'https://upm.the1studio.org/' }}"
 
           # Construct Discord embed with rich information
-          cat <<'EOF' | jq --arg published "${{ env.published }}" \
-                          --arg skipped "${{ env.skipped }}" \
-                          --arg repo "${{ github.repository }}" \
-                          --arg sha "${{ github.sha }}" \
-                          --arg short_sha "${GITHUB_SHA:0:7}" \
-                          --arg commit "$commit_msg" \
-                          --arg author "$commit_author" \
-                          --arg workflow_url "$workflow_url" \
-                          --arg registry "$registry_url" \
-                          --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-                          '.' > discord_payload.json
-          {
-            "embeds": [{
-              "title": "✅ UPM Package Published Successfully",
-              "description": "New Unity packages have been published to the registry",
-              "color": 3066993,
-              "fields": [
-                {
-                  "name": "📦 Packages Published",
-                  "value": $published | tostring,
-                  "inline": true
-                },
-                {
-                  "name": "⏭️ Packages Skipped",
-                  "value": $skipped | tostring,
-                  "inline": true
-                },
-                {
-                  "name": "📁 Repository",
-                  "value": "[" + $repo + "](https://github.com/" + $repo + ")",
-                  "inline": false
-                },
-                {
-                  "name": "💬 Commit",
-                  "value": "[`" + $short_sha + "`](https://github.com/" + $repo + "/commit/" + $sha + ") " + $commit,
-                  "inline": false
-                },
-                {
-                  "name": "👤 Author",
-                  "value": $author,
-                  "inline": true
-                },
-                {
-                  "name": "🎯 Registry",
-                  "value": "[" + $registry + "](" + $registry + ")",
-                  "inline": true
-                },
-                {
-                  "name": "🔗 Workflow Run",
-                  "value": "[View Details](" + $workflow_url + ")",
-                  "inline": false
+          jq -n \
+            --arg published "${{ env.published }}" \
+            --arg skipped "${{ env.skipped }}" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "${{ github.sha }}" \
+            --arg short_sha "${GITHUB_SHA:0:7}" \
+            --arg commit "$commit_msg" \
+            --arg author "$commit_author" \
+            --arg workflow_url "$workflow_url" \
+            --arg registry "$registry_url" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              "embeds": [{
+                "title": "✅ UPM Package Published Successfully",
+                "description": "New Unity packages have been published to the registry",
+                "color": 3066993,
+                "fields": [
+                  {
+                    "name": "📦 Packages Published",
+                    "value": ($published | tostring),
+                    "inline": true
+                  },
+                  {
+                    "name": "⏭️ Packages Skipped",
+                    "value": ($skipped | tostring),
+                    "inline": true
+                  },
+                  {
+                    "name": "📁 Repository",
+                    "value": ("[" + $repo + "](https://github.com/" + $repo + ")"),
+                    "inline": false
+                  },
+                  {
+                    "name": "💬 Commit",
+                    "value": ("[`" + $short_sha + "`](https://github.com/" + $repo + "/commit/" + $sha + ") " + $commit),
+                    "inline": false
+                  },
+                  {
+                    "name": "👤 Author",
+                    "value": $author,
+                    "inline": true
+                  },
+                  {
+                    "name": "🎯 Registry",
+                    "value": ("[" + $registry + "](" + $registry + ")"),
+                    "inline": true
+                  },
+                  {
+                    "name": "🔗 Workflow Run",
+                    "value": ("[View Details](" + $workflow_url + ")"),
+                    "inline": false
+                  }
+                ],
+                "timestamp": $timestamp,
+                "footer": {
+                  "text": "UPM Auto Publisher"
                 }
-              ],
-              "timestamp": $timestamp,
-              "footer": {
-                "text": "UPM Auto Publisher"
-              }
-            }]
-          }
-          EOF
+              }]
+            }' > discord_payload.json
 
           # Send to Discord
           curl -X POST "$DISCORD_WEBHOOK" \
@@ -702,72 +701,71 @@ jobs:
           failed_pkgs="${{ env.failed_packages || 'unknown' }}"
 
           # Construct Discord embed for failure
-          cat <<'EOF' | jq --arg published "${{ env.published || 0 }}" \
-                          --arg failed "${{ env.failed || 0 }}" \
-                          --arg skipped "${{ env.skipped || 0 }}" \
-                          --arg failed_pkgs "$failed_pkgs" \
-                          --arg repo "${{ github.repository }}" \
-                          --arg sha "${{ github.sha }}" \
-                          --arg short_sha "${GITHUB_SHA:0:7}" \
-                          --arg commit "$commit_msg" \
-                          --arg author "$commit_author" \
-                          --arg workflow_url "$workflow_url" \
-                          --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-                          '.' > discord_payload.json
-          {
-            "embeds": [{
-              "title": "❌ UPM Package Publish Failed",
-              "description": "One or more packages failed to publish to the registry",
-              "color": 15158332,
-              "fields": [
-                {
-                  "name": "❌ Packages Failed",
-                  "value": $failed | tostring,
-                  "inline": true
-                },
-                {
-                  "name": "✅ Packages Published",
-                  "value": $published | tostring,
-                  "inline": true
-                },
-                {
-                  "name": "⏭️ Packages Skipped",
-                  "value": $skipped | tostring,
-                  "inline": true
-                },
-                {
-                  "name": "🚨 Failed Packages",
-                  "value": "`" + $failed_pkgs + "`",
-                  "inline": false
-                },
-                {
-                  "name": "📁 Repository",
-                  "value": "[" + $repo + "](https://github.com/" + $repo + ")",
-                  "inline": false
-                },
-                {
-                  "name": "💬 Commit",
-                  "value": "[`" + $short_sha + "`](https://github.com/" + $repo + "/commit/" + $sha + ") " + $commit,
-                  "inline": false
-                },
-                {
-                  "name": "👤 Author",
-                  "value": $author,
-                  "inline": true
-                },
-                {
-                  "name": "🔗 Workflow Run",
-                  "value": "[View Logs](" + $workflow_url + ")",
-                  "inline": true
+          jq -n \
+            --arg published "${{ env.published || 0 }}" \
+            --arg failed "${{ env.failed || 0 }}" \
+            --arg skipped "${{ env.skipped || 0 }}" \
+            --arg failed_pkgs "$failed_pkgs" \
+            --arg repo "${{ github.repository }}" \
+            --arg sha "${{ github.sha }}" \
+            --arg short_sha "${GITHUB_SHA:0:7}" \
+            --arg commit "$commit_msg" \
+            --arg author "$commit_author" \
+            --arg workflow_url "$workflow_url" \
+            --arg timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              "embeds": [{
+                "title": "❌ UPM Package Publish Failed",
+                "description": "One or more packages failed to publish to the registry",
+                "color": 15158332,
+                "fields": [
+                  {
+                    "name": "❌ Packages Failed",
+                    "value": ($failed | tostring),
+                    "inline": true
+                  },
+                  {
+                    "name": "✅ Packages Published",
+                    "value": ($published | tostring),
+                    "inline": true
+                  },
+                  {
+                    "name": "⏭️ Packages Skipped",
+                    "value": ($skipped | tostring),
+                    "inline": true
+                  },
+                  {
+                    "name": "🚨 Failed Packages",
+                    "value": ("`" + $failed_pkgs + "`"),
+                    "inline": false
+                  },
+                  {
+                    "name": "📁 Repository",
+                    "value": ("[" + $repo + "](https://github.com/" + $repo + ")"),
+                    "inline": false
+                  },
+                  {
+                    "name": "💬 Commit",
+                    "value": ("[`" + $short_sha + "`](https://github.com/" + $repo + "/commit/" + $sha + ") " + $commit),
+                    "inline": false
+                  },
+                  {
+                    "name": "👤 Author",
+                    "value": $author,
+                    "inline": true
+                  },
+                  {
+                    "name": "🔗 Workflow Run",
+                    "value": ("[View Logs](" + $workflow_url + ")"),
+                    "inline": true
+                  }
+                ],
+                "timestamp": $timestamp,
+                "footer": {
+                  "text": "UPM Auto Publisher"
                 }
-              ],
-              "timestamp": $timestamp,
-              "footer": {
-                "text": "UPM Auto Publisher"
-              }
-            }]
-          }
-          EOF
+              }]
+            }' > discord_payload.json
 
           # Send to Discord
           curl -X POST "$DISCORD_WEBHOOK" \
