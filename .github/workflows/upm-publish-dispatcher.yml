@@ -90,13 +90,29 @@ jobs:
           echo "$payload" | jq .
 
           # Send repository_dispatch event
-          gh api \
+          jq -n \
+            --arg repo "$repository" \
+            --arg sha "$commit_sha" \
+            --argjson message "$commit_message_escaped" \
+            --arg author "$commit_author" \
+            --arg branch "$branch" \
+            --arg package_path "$package_path" \
+            '{
+              event_type: "package_publish",
+              client_payload: {
+                repository: $repo,
+                commit_sha: $sha,
+                commit_message: $message,
+                commit_author: $author,
+                branch: $branch,
+                package_path: $package_path
+              }
+            }' | gh api \
             --method POST \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/The1Studio/UPMAutoPublisher/dispatches \
-            -f event_type='package_publish' \
-            -F client_payload="$payload"
+            --input -
 
           echo "✅ Dispatch sent successfully"
         env:
