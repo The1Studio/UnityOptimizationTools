@@ -613,14 +613,26 @@ jobs:
 
           # Build package details from tracking file
           if [ -f published_packages.txt ]; then
-            package_details=$(cat published_packages.txt | while IFS='|' read -r name old_ver new_ver; do
+            echo "📋 Package tracking file found, reading details..."
+            cat published_packages.txt
+
+            package_details=""
+            while IFS='|' read -r name old_ver new_ver; do
               if [ "$old_ver" = "0.0.0" ]; then
-                echo "• **$name**: \`$new_ver\` (new package)"
+                line="• **$name**: \`$new_ver\` (new package)"
               else
-                echo "• **$name**: \`$old_ver\` → \`$new_ver\`"
+                line="• **$name**: \`$old_ver\` → \`$new_ver\`"
               fi
-            done | tr '\n' '\n')
+              if [ -z "$package_details" ]; then
+                package_details="$line"
+              else
+                package_details="$package_details"$'\n'"$line"
+              fi
+            done < published_packages.txt
+
+            echo "📦 Package details prepared: $package_details"
           else
+            echo "⚠️  No package tracking file found"
             package_details="No package details available"
           fi
 
