@@ -96,7 +96,7 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             /repos/The1Studio/UPMAutoPublisher/dispatches \
             -f event_type='package_publish' \
-            -f "client_payload=$payload"
+            -F client_payload="$payload"
 
           echo "✅ Dispatch sent successfully"
         env:
